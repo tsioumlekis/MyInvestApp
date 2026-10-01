@@ -7,6 +7,7 @@ import '../models/holding.dart';
 import '../models/transfer.dart';
 import '../utils/money.dart';
 import '../utils/wealth.dart';
+import '../widgets/privacy_toggle.dart';
 import '../widgets/sortable_table.dart';
 import 'insights_views.dart';
 
@@ -45,6 +46,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         appBar: AppBar(
           title: const Text('Αναλύσεις'),
           actions: [
+            const PrivacyToggleButton(),
             IconButton(
               tooltip: _asTable ? 'Γραφική προβολή' : 'Προβολή σε πίνακα',
               icon: Icon(_asTable ? Icons.insights : Icons.table_rows_outlined),
@@ -158,7 +160,7 @@ class _AccountsTable extends StatelessWidget {
             sortKey: (r) => r.account.updatedAt,
             text: (r) => _dateTime.format(r.account.updatedAt)),
       ],
-      totals: ['Σύνολο', '', '', '', '', _eur(total), ''],
+      totals: ['Σύνολο', '', '', '', '', maskTotal(_eur(total)), ''],
     );
   }
 }
@@ -246,11 +248,11 @@ class _PositionsTable extends StatelessWidget {
         '',
         '',
         '',
-        _eur(value),
-        _eur(cost),
-        pnl == null ? '—' : formatSignedAmount(pnl, 'EUR'),
+        maskTotal(_eur(value)),
+        maskTotal(_eur(cost)),
+        pnl == null ? '—' : maskTotal(formatSignedAmount(pnl, 'EUR')),
         pnl == null || cost == null || cost == 0 ? '' : formatPercent(pnl / cost),
-        realized == null ? '—' : formatSignedAmount(realized, 'EUR'),
+        realized == null ? '—' : maskTotal(formatSignedAmount(realized, 'EUR')),
       ],
     );
   }
@@ -414,7 +416,7 @@ class _HistoryTable extends StatelessWidget {
         TableCol('Καθαρή περιουσία',
             numeric: true,
             sortKey: (r) => r.snapshot.total,
-            text: (r) => formatAmount(r.snapshot.total, 'EUR')),
+            text: (r) => maskTotal(formatAmount(r.snapshot.total, 'EUR'))),
         TableCol('Μεταβολή',
             numeric: true,
             sortKey: (r) => r.change ?? 0,

@@ -8,6 +8,7 @@ import '../models/account.dart';
 import '../models/holding.dart';
 import '../utils/money.dart';
 import '../widgets/charts.dart';
+import '../widgets/privacy_toggle.dart';
 import 'account_form_screen.dart';
 import 'transfer_screen.dart';
 import 'transfers_history_screen.dart';
@@ -244,6 +245,7 @@ class DashboardScreen extends StatelessWidget {
           ],
         ),
         actions: [
+          const PrivacyToggleButton(),
           IconButton(
             tooltip: 'Ιστορικό μεταφορών',
             icon: const Icon(Icons.history),
@@ -399,7 +401,8 @@ class _TotalsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    String fmt(CurrencyTotals t) => _formatTotals(t, fx);
+    // Τα σύνολα κρύβονται με το «ματάκι»· οι λογαριασμοί από κάτω όχι.
+    String fmt(CurrencyTotals t) => maskTotal(_formatTotals(t, fx));
 
     Iterable<Account> ofType(AccountType t) =>
         accounts.where((a) => a.type == t);

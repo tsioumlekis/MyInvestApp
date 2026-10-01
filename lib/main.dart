@@ -7,11 +7,13 @@ import 'background/price_refresh_task.dart';
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
+import 'utils/privacy.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initializeDateFormatting('el');
+  await loadPrivacyPreference();
   // Ανανέωση τιμών στο παρασκήνιο (μόνο Android). Αν αποτύχει, η εφαρμογή
   // συνεχίζει κανονικά με ανανέωση όσο είναι ανοιχτή.
   try {

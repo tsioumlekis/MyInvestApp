@@ -7,6 +7,7 @@ import '../data/fx_service.dart';
 import '../models/holding.dart';
 import '../utils/money.dart';
 import '../widgets/charts.dart';
+import '../widgets/privacy_toggle.dart';
 import 'holding_detail_screen.dart';
 import 'holding_form_screen.dart';
 
@@ -85,6 +86,7 @@ class PortfolioScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Επενδύσεις'),
         actions: [
+          const PrivacyToggleButton(),
           ListenableBuilder(
             listenable: store,
             builder: (context, _) => store.isRefreshingPrices
@@ -266,7 +268,7 @@ class _SummaryCard extends StatelessWidget {
             Text('Αξία χαρτοφυλακίου',
                 style: text.labelLarge?.copyWith(color: onColor)),
             const SizedBox(height: 4),
-            Text('${converted ? '≈ ' : ''}${formatAmount(value, currency)}',
+            Text(maskTotal('${converted ? '≈ ' : ''}${formatAmount(value, currency)}'),
                 style: text.headlineMedium?.copyWith(
                     color: onColor, fontWeight: FontWeight.w600)),
             const SizedBox(height: 12),
@@ -274,17 +276,19 @@ class _SummaryCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                Chip(label: Text('Κόστος: ${formatAmount(cost, currency)}')),
+                Chip(
+                    label: Text(
+                        'Κόστος: ${maskTotal(formatAmount(cost, currency))}')),
                 Chip(
                   label: Text(
-                    'Ανοιχτό P/L: ${formatSignedAmount(unrealized, currency)}'
+                    'Ανοιχτό P/L: ${maskTotal(formatSignedAmount(unrealized, currency))}'
                     '${pct == null ? '' : ' (${formatPercent(pct)})'}',
                     style: TextStyle(color: pnlColor(context, unrealized)),
                   ),
                 ),
                 Chip(
                   label: Text(
-                    'Πραγματοποιημένο: ${formatSignedAmount(realized, currency)}',
+                    'Πραγματοποιημένο: ${maskTotal(formatSignedAmount(realized, currency))}',
                     style: TextStyle(color: pnlColor(context, realized)),
                   ),
                 ),

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/account.dart';
 import '../models/holding.dart';
+import '../utils/privacy.dart';
 import '../utils/wealth.dart';
 import 'account_repository.dart';
 import 'fx_service.dart';
@@ -41,6 +42,8 @@ class FinanceStore extends ChangeNotifier {
         notifyListeners();
       }, onError: (Object e) => debugPrint('Snapshots: $e')),
     ];
+    // Όταν αλλάζει η απόκρυψη ποσών, ξανασχεδιάζονται όλες οι οθόνες.
+    hideAmounts.addListener(notifyListeners);
   }
 
   // ------------------------------------------------- Ιστορικό περιουσίας
@@ -221,6 +224,7 @@ class FinanceStore extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    hideAmounts.removeListener(notifyListeners);
     _snapshotTimer?.cancel();
     _priceTimer?.cancel();
     for (final s in _subs) {

@@ -15,6 +15,9 @@ final _fullDate = DateFormat('dd/MM/yyyy');
 
 String _eur(double v) => formatAmount(v, 'EUR');
 
+/// Σύνολο σε ευρώ: κρύβεται όταν είναι ενεργή η απόκρυψη ποσών.
+String _total(double v) => maskTotal(_eur(v));
+
 /// Κοινό περίγραμμα κάθε καρτέλας: κύλιση, μέγιστο πλάτος, περιθώρια.
 class _Page extends StatelessWidget {
   const _Page({required this.children});
@@ -121,7 +124,7 @@ class AccountsInsights extends StatelessWidget {
     return _Page(children: [
       HeroFigure(
         label: 'Καθαρή περιουσία',
-        value: '${wealth.converted ? '≈ ' : ''}${_eur(wealth.total)}',
+        value: maskTotal('${wealth.converted ? '≈ ' : ''}${_eur(wealth.total)}'),
         delta: change == null
             ? null
             : '${formatSignedAmount(change, 'EUR')} από ${_fullDate.format(previous!.date)}',
@@ -132,7 +135,7 @@ class AccountsInsights extends StatelessWidget {
         for (final t in AccountType.values)
           StatTile(
             label: t.label,
-            value: _eur(wealth.byType[t] ?? 0),
+            value: _total(wealth.byType[t] ?? 0),
             icon: _typeIcons[t],
           ),
       ]),
@@ -201,23 +204,23 @@ class PositionsInsights extends StatelessWidget {
     return _Page(children: [
       HeroFigure(
         label: 'Αξία χαρτοφυλακίου',
-        value: '${converted ? '≈ ' : ''}${_eur(value)}',
-        delta: '${formatSignedAmount(unrealized, 'EUR')}'
+        value: maskTotal('${converted ? '≈ ' : ''}${_eur(value)}'),
+        delta: '${maskTotal(formatSignedAmount(unrealized, 'EUR'))}'
             '${pct == null ? '' : ' (${formatPercent(pct)})'} ανοιχτό κέρδος',
         deltaValue: unrealized,
       ),
       KpiGrid(tiles: [
-        StatTile(label: 'Κόστος', value: _eur(cost), icon: Icons.savings_outlined),
+        StatTile(label: 'Κόστος', value: _total(cost), icon: Icons.savings_outlined),
         StatTile(
           label: 'Απόδοση',
           value: pct == null ? '—' : formatPercent(pct),
           icon: Icons.percent,
-          delta: formatSignedAmount(unrealized, 'EUR'),
+          delta: maskTotal(formatSignedAmount(unrealized, 'EUR')),
           deltaValue: unrealized,
         ),
         StatTile(
           label: 'Πραγματοποιημένο',
-          value: formatSignedAmount(realized, 'EUR'),
+          value: maskTotal(formatSignedAmount(realized, 'EUR')),
           icon: Icons.check_circle_outline,
         ),
         StatTile(label: 'Προμήθειες', value: _eur(fees), icon: Icons.receipt_long_outlined),
@@ -306,8 +309,8 @@ class TradesInsights extends StatelessWidget {
 
     return _Page(children: [
       KpiGrid(tiles: [
-        StatTile(label: 'Αγορές', value: _eur(buys), icon: Icons.south_west),
-        StatTile(label: 'Πωλήσεις', value: _eur(sells), icon: Icons.north_east),
+        StatTile(label: 'Αγορές', value: _total(buys), icon: Icons.south_west),
+        StatTile(label: 'Πωλήσεις', value: _total(sells), icon: Icons.north_east),
         StatTile(label: 'Προμήθειες', value: _eur(fees), icon: Icons.receipt_long_outlined),
         StatTile(label: 'Συναλλαγές', value: '${trades.length}', icon: Icons.tag),
       ]),
@@ -535,7 +538,7 @@ class HistoryInsights extends StatelessWidget {
     return _Page(children: [
       HeroFigure(
         label: 'Καθαρή περιουσία',
-        value: _eur(snaps.last.total),
+        value: _total(snaps.last.total),
         delta: snaps.length < 2
             ? null
             : '${formatSignedAmount(overall, 'EUR')}'

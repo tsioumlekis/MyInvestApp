@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'privacy.dart';
+
 const supportedCurrencies = ['EUR', 'USD', 'GBP', 'CHF'];
 
 const _locale = 'el_GR';
@@ -11,6 +13,12 @@ String formatAmount(double value, String currency) {
   return NumberFormat.simpleCurrency(locale: _locale, name: currency)
       .format(value);
 }
+
+/// Για ΣΥΝΟΛΑ (καθαρή περιουσία, σύνολα ανά κατηγορία, αξία χαρτοφυλακίου):
+/// όταν είναι ενεργή η απόκρυψη ([hideAmounts]) δείχνει «•••• €» αντί για
+/// το [text]. Τα ποσά μεμονωμένων λογαριασμών/θέσεων δεν κρύβονται, ώστε να
+/// μπορούν να ενημερώνονται.
+String maskTotal(String text) => hideAmounts.value ? '$hiddenAmount €' : text;
 
 /// Τιμή ανά μονάδα: περισσότερα δεκαδικά για μικρές τιμές (π.χ. crypto).
 String formatPrice(double price, String currency) {

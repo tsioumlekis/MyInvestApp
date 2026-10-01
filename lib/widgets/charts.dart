@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../utils/money.dart';
+import '../utils/privacy.dart';
 
 /// Κατηγορική παλέτα (έλεγχος αχρωματοψίας περασμένος για 6 διαδοχικές
 /// θέσεις, σε φωτεινό και σκούρο θέμα). Το χρώμα ακολουθεί την οντότητα,
@@ -84,7 +85,7 @@ class _AllocationBarState extends State<AllocationBar> {
                       onExit: (_) => setState(() => _hovered = null),
                       child: Tooltip(
                         message:
-                            '${items[i].label}: ${formatAmount(items[i].value, widget.currency)}'
+                            '${items[i].label}: ${maskTotal(formatAmount(items[i].value, widget.currency))}'
                             ' (${_pct(items[i].value / total)})',
                         child: Container(
                           // Κενό 2px ανάμεσα στα μέρη.
@@ -117,7 +118,7 @@ class _AllocationBarState extends State<AllocationBar> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(child: Text(items[i].label, style: text.bodyMedium)),
-                Text(formatAmount(items[i].value, widget.currency),
+                Text(maskTotal(formatAmount(items[i].value, widget.currency)),
                     style: text.bodyMedium),
                 SizedBox(
                   width: 64,
@@ -263,7 +264,9 @@ class TimeLineChart extends StatelessWidget {
                 if (value == meta.min || value == meta.max) {
                   return const SizedBox.shrink();
                 }
-                return Text(compact.format(value), style: axisStyle);
+                return Text(
+                    hideAmounts.value ? hiddenAmount : compact.format(value),
+                    style: axisStyle);
               },
             ),
           ),
@@ -289,7 +292,7 @@ class TimeLineChart extends StatelessWidget {
               for (final s in touched)
                 LineTooltipItem(
                   '${_tipDate.format(first.add(Duration(hours: (s.x * 24).round())))}\n'
-                  '${formatAmount(s.y, currency)}',
+                  '${maskTotal(formatAmount(s.y, currency))}',
                   TextStyle(color: scheme.onInverseSurface, fontSize: 12),
                 ),
             ],
