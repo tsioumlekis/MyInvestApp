@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/account.dart';
+import '../models/movement.dart';
 import '../models/transfer.dart';
 
 /// Πρόσβαση στους λογαριασμούς ενός χρήστη στο Firestore:
@@ -83,6 +84,59 @@ class AccountRepository {
       });
     }
     batch.delete(_transfers.doc(t.id));
+    return batch.commit();
+  }
+
+  // ------------------------------------------- Πληρωμές / εισπράξεις
+
+  CollectionReference<Map<String, dynamic>> get _movements =>
+      _collection.parent!.collection('movements');
+
+  /// Πληρωμές και εισπράξεις, πιο πρόσφατες πρώτα.
+  Stream<List<Movement>> watchMovements() {
+    return _movements.orderBy('date', descending: true).snapshots().map(
+        (s) => [for (final d in s.docs) Movement.fromMap(d.id, d.data())]);
+  }
+
+  /// Καταγράφει πληρωμή ή είσπραξη και αλλάζει το υπόλοιπο του λογαριασμού
+  /// μαζί (batch με increment, ώστε να δουλεύει σωστά και offline).
+  Future<void> addMovement({
+    required Account account,
+    required MovementKind kind,
+    required int amountCents,
+    required DateTime date,
+    String note = '',
+  }) {
+    final ref = _movements.doc();
+    final movement = Movement(
+      id: ref.id,
+      accountId: account.id,
+      kind: kind,
+      amountCents: amountCents,
+      currency: account.currency,
+      date: date,
+      note: note,
+    );
+    return (_db.batch()
+          ..update(_collection.doc(account.id), {
+            'balanceCents': FieldValue.increment(movement.signedCents),
+            'updatedAt': DateTime.now().toIso8601String(),
+          })
+          ..set(ref, movement.toMap()))
+        .commit();
+  }
+
+  /// Αναιρεί μια πληρωμή/είσπραξη: επαναφέρει το ποσό και διαγράφει την
+  /// εγγραφή. Αν ο λογαριασμός έχει διαγραφεί, διαγράφεται μόνο η εγγραφή.
+  Future<void> undoMovement(Movement m, {required bool accountExists}) {
+    final batch = _db.batch();
+    if (accountExists) {
+      batch.update(_collection.doc(m.accountId), {
+        'balanceCents': FieldValue.increment(-m.signedCents),
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+    }
+    batch.delete(_movements.doc(m.id));
     return batch.commit();
   }
 

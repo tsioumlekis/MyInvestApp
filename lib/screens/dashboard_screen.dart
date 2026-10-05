@@ -10,6 +10,7 @@ import '../utils/money.dart';
 import '../widgets/charts.dart';
 import '../widgets/privacy_toggle.dart';
 import 'account_form_screen.dart';
+import 'payment_screen.dart';
 import 'transfer_screen.dart';
 import 'transfers_history_screen.dart';
 
@@ -32,6 +33,12 @@ class DashboardScreen extends StatelessWidget {
   void _openTransfer(BuildContext context, {String? fromId}) {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => TransferScreen(store: store, fromId: fromId),
+    ));
+  }
+
+  void _openPayment(BuildContext context, {String? accountId}) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => PaymentScreen(store: store, accountId: accountId),
     ));
   }
 
@@ -247,7 +254,7 @@ class DashboardScreen extends StatelessWidget {
         actions: [
           const PrivacyToggleButton(),
           IconButton(
-            tooltip: 'Ιστορικό μεταφορών',
+            tooltip: 'Ιστορικό κινήσεων',
             icon: const Icon(Icons.history),
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(
               builder: (_) => TransfersHistoryScreen(store: store),
@@ -260,11 +267,25 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'add-account',
-        onPressed: () => _chooseNew(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Προσθήκη'),
+      // Κύριο κουμπί η πληρωμή (η πιο συχνή ενέργεια)· το «+» για τα υπόλοιπα.
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton.small(
+            heroTag: 'add-account',
+            tooltip: 'Προσθήκη λογαριασμού, δανεικού ή μεταφοράς',
+            onPressed: () => _chooseNew(context),
+            child: const Icon(Icons.add),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'add-payment',
+            onPressed: () => _openPayment(context),
+            icon: const Icon(Icons.payments_outlined),
+            label: const Text('Πληρωμή'),
+          ),
+        ],
       ),
       body: ListenableBuilder(
         listenable: store,
@@ -294,7 +315,8 @@ class DashboardScreen extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 720),
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                // Χώρος κάτω για τα δύο κουμπιά, ώστε να μη σκεπάζουν τη λίστα.
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 150),
                 children: [
                   _TotalsCard(
                     accounts: accounts,
@@ -313,6 +335,7 @@ class DashboardScreen extends StatelessWidget {
                       onEdit: (a) => _openForm(context, account: a),
                       onDelete: (a) => _confirmDelete(context, a),
                       onTransfer: (a) => _openTransfer(context, fromId: a.id),
+                      onPay: (a) => _openPayment(context, accountId: a.id),
                     ),
                   if (loans.isNotEmpty)
                     _InstitutionSection(
@@ -326,6 +349,7 @@ class DashboardScreen extends StatelessWidget {
                       onEdit: (a) => _openForm(context, account: a),
                       onDelete: (a) => _confirmDelete(context, a),
                       onTransfer: (a) => _openTransfer(context, fromId: a.id),
+                      onPay: (a) => _openPayment(context, accountId: a.id),
                     ),
                 ],
               ),
@@ -483,9 +507,11 @@ class _InstitutionSection extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onTransfer,
+    required this.onPay,
   });
 
   final ValueChanged<Account> onTransfer;
+  final ValueChanged<Account> onPay;
 
   final String title;
   final List<Account> accounts;
@@ -565,16 +591,23 @@ class _InstitutionSection extends StatelessWidget {
                         ),
                         PopupMenuButton<String>(
                           onSelected: (v) => switch (v) {
+                            'pay' => onPay(a),
                             'transfer' => onTransfer(a),
                             'edit' => onEdit(a),
                             _ => onDelete(a),
                           },
-                          itemBuilder: (_) => const [
-                            PopupMenuItem(
+                          itemBuilder: (_) => [
+                            if (a.type != AccountType.lent)
+                              const PopupMenuItem(
+                                  value: 'pay',
+                                  child: Text('Πληρωμή από εδώ')),
+                            const PopupMenuItem(
                                 value: 'transfer',
                                 child: Text('Μεταφορά από εδώ')),
-                            PopupMenuItem(value: 'edit', child: Text('Επεξεργασία')),
-                            PopupMenuItem(value: 'delete', child: Text('Διαγραφή')),
+                            const PopupMenuItem(
+                                value: 'edit', child: Text('Επεξεργασία')),
+                            const PopupMenuItem(
+                                value: 'delete', child: Text('Διαγραφή')),
                           ],
                         ),
                       ],
